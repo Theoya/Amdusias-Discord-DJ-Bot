@@ -1,0 +1,63 @@
+graph TB
+    subgraph "Your PC - Audio Source"
+        DJ[DJ Software<br/>Serato/Rekordbox/VirtualDJ]
+        VAC[Virtual Audio Cable<br/>VB-Audio/Stereo Mix]
+        ENCODER[Audio Encoder<br/>BUTT/FFmpeg/OBS]
+        DJ --> VAC
+        VAC --> ENCODER
+    end
+
+    subgraph "Your PC - Icecast Server"
+        ICECAST[Icecast Server<br/>Port 8000]
+        ENCODER -->|Source Stream<br/>MP3 128kbps| ICECAST
+    end
+
+    subgraph "Router/Network"
+        ROUTER[Router<br/>Port Forwarding<br/>External:8000 → PC:8000]
+        ICECAST --> ROUTER
+    end
+
+    subgraph "Discord Bot - Python Application"
+        MAIN[main.py<br/>Application Entry Point]
+        CONFIG[config.py<br/>Environment Variables<br/>Configuration Management]
+        READER[stream_reader.py<br/>IcecastStreamReader<br/>HTTP Stream Connection]
+        AUDIO[audio_source.py<br/>IcecastAudioSource<br/>Discord Audio Adapter]
+        BOT[bot.py<br/>DJBot<br/>Discord Commands]
+
+        MAIN --> CONFIG
+        MAIN --> BOT
+        BOT --> READER
+        BOT --> AUDIO
+        AUDIO --> READER
+        CONFIG --> BOT
+    end
+
+    subgraph "Discord Voice Server"
+        VOICE[Discord Voice Channel<br/>Audio Distribution]
+    end
+
+    subgraph "Your Friends - Listeners"
+        L1[Listener 1<br/>Discord Client]
+        L2[Listener 2<br/>Discord Client]
+        L3[Listener N<br/>Discord Client]
+    end
+
+    ROUTER -->|HTTP Stream<br/>http://your-ip:8000/live| BOT
+    BOT -->|Voice Packets<br/>Opus Codec| VOICE
+    VOICE -->|Unicast Streams| L1
+    VOICE -->|Unicast Streams| L2
+    VOICE -->|Unicast Streams| L3
+
+    style DJ fill:#e1f5ff
+    style ICECAST fill:#fff3e0
+    style BOT fill:#f3e5f5
+    style VOICE fill:#e8f5e9
+    style ROUTER fill:#ffebee
+
+    classDef config fill:#fff9c4
+    classDef stream fill:#e0f2f1
+    classDef audio fill:#fce4ec
+
+    class CONFIG config
+    class READER,AUDIO stream
+    class MAIN audio
