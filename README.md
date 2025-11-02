@@ -34,12 +34,12 @@ graph TB
         VoiceServer -->|Stream| Users[Discord Users]
     end
 
-    style Apps fill:#e1f5ff
-    style WinAudio fill:#fff3cd
-    style PyAudio fill:#d4edda
-    style AudioSource fill:#d4edda
-    style DiscordPy fill:#cce5ff
-    style Users fill:#f8d7da
+    style Apps fill:#2c5282,stroke:#4a90e2,stroke-width:2px,color:#f0f0f0
+    style WinAudio fill:#8b6914,stroke:#d4a017,stroke-width:2px,color:#f0f0f0
+    style PyAudio fill:#1e4620,stroke:#28a745,stroke-width:2px,color:#f0f0f0
+    style AudioSource fill:#1e4620,stroke:#28a745,stroke-width:2px,color:#f0f0f0
+    style DiscordPy fill:#2c5282,stroke:#4a90e2,stroke-width:2px,color:#f0f0f0
+    style Users fill:#7a1a1a,stroke:#dc3545,stroke-width:2px,color:#f0f0f0
 ```
 
 ### Component Architecture
