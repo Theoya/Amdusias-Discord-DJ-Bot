@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(dir /B /S)",
-      "Bash(dir)"
+      "Bash(dir)",
+      "Bash(python -m black src tests)",
+      "Bash(pip install black)",
+      "Bash(python -m mypy src)",
+      "Bash(pytest:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(./venv/Scripts/python.exe -m pip:*)",
+      "Bash(./venv/Scripts/python.exe:*)"
     ],
     "deny": [],
     "ask": []

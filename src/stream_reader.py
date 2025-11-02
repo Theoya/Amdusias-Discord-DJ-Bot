@@ -79,7 +79,7 @@ class IcecastStreamReader:
             self._response = await self._session.get(
                 self._stream_url,
                 timeout=timeout,
-                headers={'Icy-MetaData': '0'}  # Disable metadata for simpler parsing
+                headers={"Icy-MetaData": "0"},  # Disable metadata for simpler parsing
             )
             self._response.raise_for_status()
             self._is_connected = True

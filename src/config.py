@@ -17,7 +17,7 @@ class DiscordConfig:
 
 @dataclass
 class IcecastConfig:
-    """Icecast server configuration."""
+    """Icecast server configuration (optional)."""
 
     host: str
     port: int
@@ -34,12 +34,24 @@ class AudioConfig:
 
 
 @dataclass
+class AudioSourceConfig:
+    """Configuration for the selected audio source."""
+
+    source_type: str  # 'local', 'icecast', 'url'
+    device_index: Optional[int] = None  # For local audio devices
+    url: Optional[str] = None  # For icecast/url sources
+    bitrate: int = 128
+    sample_rate: int = 48000
+
+
+@dataclass
 class BotConfig:
     """Complete bot configuration."""
 
     discord: DiscordConfig
-    icecast: IcecastConfig
+    icecast: Optional[IcecastConfig]
     audio: AudioConfig
+    audio_source: Optional[AudioSourceConfig] = None
 
 
 class ConfigLoader:
@@ -58,7 +70,9 @@ class ConfigLoader:
             load_dotenv()
 
     @staticmethod
-    def get_env_var(key: str, default: Optional[str] = None, required: bool = True) -> str:
+    def get_env_var(
+        key: str, default: Optional[str] = None, required: bool = True
+    ) -> str:
         """Get environment variable with optional default.
 
         Args:
@@ -95,23 +109,28 @@ class ConfigLoader:
         discord_config = DiscordConfig(
             token=cls.get_env_var("DISCORD_BOT_TOKEN"),
             guild_id=cls.get_env_var("DISCORD_GUILD_ID", required=False),
-            command_prefix=cls.get_env_var("COMMAND_PREFIX", default="!")
+            command_prefix=cls.get_env_var("COMMAND_PREFIX", default="!"),
         )
 
-        icecast_config = IcecastConfig(
-            host=cls.get_env_var("ICECAST_HOST", default="127.0.0.1"),
-            port=int(cls.get_env_var("ICECAST_PORT", default="8000")),
-            mount=cls.get_env_var("ICECAST_MOUNT", default="/live"),
-            url=cls.get_env_var("ICECAST_URL")
-        )
+        # Icecast is now optional
+        icecast_url = cls.get_env_var("ICECAST_URL", required=False)
+        icecast_config = None
+        if icecast_url:
+            icecast_config = IcecastConfig(
+                host=cls.get_env_var("ICECAST_HOST", default="127.0.0.1"),
+                port=int(cls.get_env_var("ICECAST_PORT", default="8000")),
+                mount=cls.get_env_var("ICECAST_MOUNT", default="/live"),
+                url=icecast_url,
+            )
 
         audio_config = AudioConfig(
             bitrate=int(cls.get_env_var("AUDIO_BITRATE", default="128")),
-            sample_rate=int(cls.get_env_var("AUDIO_SAMPLE_RATE", default="48000"))
+            sample_rate=int(cls.get_env_var("AUDIO_SAMPLE_RATE", default="48000")),
         )
 
         return BotConfig(
             discord=discord_config,
             icecast=icecast_config,
-            audio=audio_config
+            audio=audio_config,
+            audio_source=None  # Will be set by CLI selection
         )

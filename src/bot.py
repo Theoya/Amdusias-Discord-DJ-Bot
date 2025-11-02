@@ -1,36 +1,34 @@
 """Discord bot implementation for DJ streaming."""
 
 import logging
-from typing import Optional
+from typing import Optional, Union, cast
 import discord
 from discord.ext import commands
 from src.config import BotConfig
-from src.stream_reader import IcecastStreamReader
+from src.audio_sources import AudioSourceProtocol
 
 
 logger = logging.getLogger(__name__)
 
 
 class DJBot(commands.Bot):
-    """Discord DJ bot that streams audio from Icecast server."""
+    """Discord DJ bot that streams audio from various sources."""
 
-    def __init__(self, config: BotConfig) -> None:
+    def __init__(self, config: BotConfig, audio_source: AudioSourceProtocol) -> None:
         """Initialize the DJ bot.
 
         Args:
             config: Bot configuration.
+            audio_source: Audio source to stream from.
         """
         intents = discord.Intents.default()
         intents.message_content = True
         intents.voice_states = True
 
-        super().__init__(
-            command_prefix=config.discord.command_prefix,
-            intents=intents
-        )
+        super().__init__(command_prefix=config.discord.command_prefix, intents=intents)
 
         self._config = config
-        self._stream_reader: Optional[IcecastStreamReader] = None
+        self._audio_source = audio_source
         self._voice_client: Optional[discord.VoiceClient] = None
 
         # Register commands
@@ -74,21 +72,31 @@ class DJBot(commands.Bot):
         Returns:
             Join command.
         """
+
         @commands.command(name="join")
         async def join(ctx: commands.Context) -> None:
             """Join the voice channel of the user who invoked the command."""
+            # Type guard: ctx.author must be a Member to have voice attribute
+            if not isinstance(ctx.author, discord.Member):
+                await ctx.send("This command can only be used in a server.")
+                return
+
             if not ctx.author.voice:
                 await ctx.send("You need to be in a voice channel to use this command.")
                 return
 
             channel = ctx.author.voice.channel
+            if channel is None:
+                await ctx.send("Could not determine your voice channel.")
+                return
 
             if self._voice_client and self._voice_client.is_connected():
                 await ctx.send("Already connected to a voice channel.")
                 return
 
             try:
-                self._voice_client = await channel.connect()
+                # channel is VoiceChannel or StageChannel, both have connect()
+                self._voice_client = await channel.connect()  # type: ignore[union-attr]
                 await ctx.send(f"Joined {channel.name}")
                 logger.info(f"Joined voice channel: {channel.name}")
             except Exception as e:
@@ -103,6 +111,7 @@ class DJBot(commands.Bot):
         Returns:
             Leave command.
         """
+
         @commands.command(name="leave")
         async def leave(ctx: commands.Context) -> None:
             """Leave the current voice channel."""
@@ -123,35 +132,53 @@ class DJBot(commands.Bot):
         Returns:
             Play command.
         """
+
         @commands.command(name="play")
         async def play(ctx: commands.Context) -> None:
-            """Start streaming audio from the Icecast server."""
+            """Start streaming audio from the configured audio source."""
+            # Auto-join if not connected
             if not self._voice_client or not self._voice_client.is_connected():
-                await ctx.send("Not connected to a voice channel. Use !join first.")
-                return
+                # Type guard: ctx.author must be a Member to have voice attribute
+                if not isinstance(ctx.author, discord.Member):
+                    await ctx.send("This command can only be used in a server.")
+                    return
+
+                if not ctx.author.voice:
+                    await ctx.send("You need to be in a voice channel to use this command.")
+                    return
+
+                channel = ctx.author.voice.channel
+                if channel is None:
+                    await ctx.send("Could not determine your voice channel.")
+                    return
+
+                try:
+                    # Join the user's voice channel
+                    self._voice_client = await channel.connect()  # type: ignore[union-attr]
+                    await ctx.send(f"Joined {channel.name}")
+                    logger.info(f"Auto-joined voice channel: {channel.name}")
+                except Exception as e:
+                    logger.error(f"Failed to join voice channel: {e}")
+                    await ctx.send(f"Failed to join voice channel: {e}")
+                    return
 
             if self._voice_client.is_playing():
                 await ctx.send("Already playing audio.")
                 return
 
             try:
-                # Use FFmpeg to read from Icecast stream and convert to Discord format
-                stream_url = self._config.icecast.url
+                # Create Discord audio source from the configured source
+                discord_audio = self._audio_source.create_discord_source()
 
-                # FFmpeg options for better streaming
-                ffmpeg_options = {
-                    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                    'options': '-vn -b:a 128k'
-                }
-
-                audio_source = discord.FFmpegPCMAudio(stream_url, **ffmpeg_options)
+                # Start playing
                 self._voice_client.play(
-                    audio_source,
-                    after=lambda e: logger.error(f"Player error: {e}") if e else None
+                    discord_audio,
+                    after=lambda e: logger.error(f"Player error: {e}") if e else None,
                 )
 
-                await ctx.send(f"Now streaming from {stream_url}")
-                logger.info(f"Started streaming from {stream_url}")
+                description = self._audio_source.get_description()
+                await ctx.send(f"Now streaming: {description}")
+                logger.info(f"Started streaming: {description}")
 
             except Exception as e:
                 logger.error(f"Failed to start streaming: {e}")
@@ -165,6 +192,7 @@ class DJBot(commands.Bot):
         Returns:
             Stop command.
         """
+
         @commands.command(name="stop")
         async def stop(ctx: commands.Context) -> None:
             """Stop streaming audio."""
@@ -189,7 +217,7 @@ class DJBot(commands.Bot):
         if self._voice_client and self._voice_client.is_connected():
             await self._voice_client.disconnect()
 
-        if self._stream_reader:
-            await self._stream_reader.close()
+        # Cleanup audio source
+        self._audio_source.cleanup()
 
         await self.close()

@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 class IcecastAudioSource(discord.AudioSource):
     """Audio source that reads from an Icecast stream."""
 
-    def __init__(self, stream_reader: StreamReaderProtocol, chunk_size: int = 3840) -> None:
+    def __init__(
+        self, stream_reader: StreamReaderProtocol, chunk_size: int = 3840
+    ) -> None:
         """Initialize audio source.
 
         Args:
@@ -56,13 +58,13 @@ class IcecastAudioSource(discord.AudioSource):
             Audio data chunk, or empty bytes if no data available.
         """
         if not self._is_active:
-            return b''
+            return b""
 
         # Note: This is a synchronous method required by discord.AudioSource
         # In a real implementation, you'd need to handle async/sync bridge
         # For now, this returns empty - actual implementation would require
         # running the async read in a separate thread or using discord.FFmpegPCMAudio
-        return b''
+        return b""
 
     def cleanup(self) -> None:
         """Cleanup resources when audio source is destroyed."""

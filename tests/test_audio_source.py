@@ -65,7 +65,7 @@ class TestIcecastAudioSource:
         source = IcecastAudioSource(mock_reader)
 
         result = source.read()
-        assert result == b''
+        assert result == b""
 
     def test_read_when_active(self) -> None:
         """Test reading when audio source is active."""
