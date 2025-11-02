@@ -7,7 +7,6 @@ from src.config import (
     ConfigLoader,
     BotConfig,
     DiscordConfig,
-    IcecastConfig,
     AudioConfig,
 )
 
@@ -67,10 +66,6 @@ class TestConfigLoader:
             "DISCORD_BOT_TOKEN": "test_token",
             "DISCORD_GUILD_ID": "123456789",
             "COMMAND_PREFIX": "!",
-            "ICECAST_HOST": "localhost",
-            "ICECAST_PORT": "8000",
-            "ICECAST_MOUNT": "/live",
-            "ICECAST_URL": "http://localhost:8000/live",
             "AUDIO_BITRATE": "128",
             "AUDIO_SAMPLE_RATE": "48000",
         }
@@ -83,10 +78,6 @@ class TestConfigLoader:
                 assert config.discord.token == "test_token"
                 assert config.discord.guild_id == "123456789"
                 assert config.discord.command_prefix == "!"
-                assert config.icecast.host == "localhost"
-                assert config.icecast.port == 8000
-                assert config.icecast.mount == "/live"
-                assert config.icecast.url == "http://localhost:8000/live"
                 assert config.audio.bitrate == 128
                 assert config.audio.sample_rate == 48000
 
@@ -94,7 +85,6 @@ class TestConfigLoader:
         """Test loading configuration with default values."""
         env_vars = {
             "DISCORD_BOT_TOKEN": "test_token",
-            "ICECAST_URL": "http://localhost:8000/live",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
@@ -104,9 +94,6 @@ class TestConfigLoader:
                 assert config.discord.token == "test_token"
                 assert config.discord.guild_id == ""
                 assert config.discord.command_prefix == "!"
-                assert config.icecast.host == "127.0.0.1"
-                assert config.icecast.port == 8000
-                assert config.icecast.mount == "/live"
                 assert config.audio.bitrate == 128
                 assert config.audio.sample_rate == 48000
 
@@ -130,21 +117,6 @@ class TestDiscordConfig:
         assert config.token == "test_token"
         assert config.guild_id == "123456"
         assert config.command_prefix == "!"
-
-
-class TestIcecastConfig:
-    """Tests for IcecastConfig dataclass."""
-
-    def test_icecast_config_creation(self) -> None:
-        """Test creating Icecast configuration."""
-        config = IcecastConfig(
-            host="localhost", port=8000, mount="/live", url="http://localhost:8000/live"
-        )
-
-        assert config.host == "localhost"
-        assert config.port == 8000
-        assert config.mount == "/live"
-        assert config.url == "http://localhost:8000/live"
 
 
 class TestAudioConfig:

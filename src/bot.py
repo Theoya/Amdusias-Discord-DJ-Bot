@@ -33,7 +33,6 @@ class DJBot(commands.Bot):
 
         # Register commands
         self.add_command(self._create_join_command())
-        self.add_command(self._create_leave_command())
         self.add_command(self._create_play_command())
         self.add_command(self._create_stop_command())
 
@@ -105,27 +104,6 @@ class DJBot(commands.Bot):
 
         return join
 
-    def _create_leave_command(self) -> commands.Command:
-        """Create the leave voice channel command.
-
-        Returns:
-            Leave command.
-        """
-
-        @commands.command(name="leave")
-        async def leave(ctx: commands.Context) -> None:
-            """Leave the current voice channel."""
-            if not self._voice_client or not self._voice_client.is_connected():
-                await ctx.send("Not connected to a voice channel.")
-                return
-
-            await self._voice_client.disconnect()
-            self._voice_client = None
-            await ctx.send("Disconnected from voice channel")
-            logger.info("Left voice channel")
-
-        return leave
-
     def _create_play_command(self) -> commands.Command:
         """Create the play stream command.
 
@@ -144,7 +122,9 @@ class DJBot(commands.Bot):
                     return
 
                 if not ctx.author.voice:
-                    await ctx.send("You need to be in a voice channel to use this command.")
+                    await ctx.send(
+                        "You need to be in a voice channel to use this command."
+                    )
                     return
 
                 channel = ctx.author.voice.channel
@@ -195,7 +175,7 @@ class DJBot(commands.Bot):
 
         @commands.command(name="stop")
         async def stop(ctx: commands.Context) -> None:
-            """Stop streaming audio."""
+            """Stop streaming audio and disconnect from voice channel."""
             if not self._voice_client:
                 await ctx.send("Not connected to a voice channel.")
                 return
@@ -204,9 +184,13 @@ class DJBot(commands.Bot):
                 await ctx.send("Not currently playing audio.")
                 return
 
+            # Stop playback and disconnect
             self._voice_client.stop()
-            await ctx.send("Stopped streaming")
-            logger.info("Stopped streaming")
+            await self._voice_client.disconnect()
+            self._voice_client = None
+
+            await ctx.send("Stopped streaming and disconnected from voice channel")
+            logger.info("Stopped streaming and disconnected from voice channel")
 
         return stop
 

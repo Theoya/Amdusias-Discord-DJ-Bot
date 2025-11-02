@@ -78,10 +78,10 @@ class AudioDeviceEnumerator:
                 info = p.get_device_info_by_index(i)
 
                 # Only include loopback devices (system audio output capture)
-                if info.get('isLoopbackDevice', False):
-                    device_name = info['name']
+                if info.get("isLoopbackDevice", False):
+                    device_name = info["name"]
                     # Clean up the name - remove " [Loopback]" suffix if present
-                    display_name = device_name.replace(' [Loopback]', '')
+                    display_name = device_name.replace(" [Loopback]", "")
 
                     devices.append(
                         AudioDevice(
@@ -97,7 +97,9 @@ class AudioDeviceEnumerator:
             logger.info(f"Found {len(devices)} WASAPI loopback devices")
 
         except ImportError:
-            logger.warning("pyaudiowpatch not available, WASAPI loopback devices not enumerated")
+            logger.warning(
+                "pyaudiowpatch not available, WASAPI loopback devices not enumerated"
+            )
         except Exception as e:
             logger.error(f"Error enumerating WASAPI loopback devices: {e}")
 
@@ -117,13 +119,20 @@ class AudioDeviceEnumerator:
                     if match:
                         device_name = match.group(1)
                         # Detect if this is Stereo Mix
-                        is_stereo_mix = any(keyword in device_name.lower() for keyword in
-                                           ['stereo mix', 'wave out', 'what u hear'])
+                        is_stereo_mix = any(
+                            keyword in device_name.lower()
+                            for keyword in ["stereo mix", "wave out", "what u hear"]
+                        )
 
                         devices.append(
                             AudioDevice(
                                 index=device_index,
-                                name=f"{device_name}" + (" [System Audio]" if is_stereo_mix else " [Microphone]"),
+                                name=f"{device_name}"
+                                + (
+                                    " [System Audio]"
+                                    if is_stereo_mix
+                                    else " [Microphone]"
+                                ),
                                 device_id=f"dshow:audio={device_name}",
                                 device_type="output" if is_stereo_mix else "input",
                             )

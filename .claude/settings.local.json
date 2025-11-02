@@ -11,7 +11,8 @@
       "Bash(python:*)",
       "Bash(ffmpeg:*)",
       "Bash(./venv/Scripts/python.exe -m pip:*)",
-      "Bash(./venv/Scripts/python.exe:*)"
+      "Bash(./venv/Scripts/python.exe:*)",
+      "Bash(del \"T:\\Amdusias-Discord-DJ-Bot\\src\\stream_reader.py\")"
     ],
     "deny": [],
     "ask": []

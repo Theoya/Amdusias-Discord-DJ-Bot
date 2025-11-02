@@ -5,7 +5,6 @@ from typing import Optional, Union
 from src.audio_sources import (
     AudioSourceProtocol,
     LocalAudioSource,
-    IcecastAudioSource,
     URLAudioSource,
     WASAPILoopbackAudioSource,
     AudioSourceType,
@@ -78,23 +77,6 @@ class AudioSourceFactory:
             )
 
     @staticmethod
-    def create_icecast_source(
-        url: str,
-        bitrate: int = 128,
-    ) -> IcecastAudioSource:
-        """Create an Icecast stream source.
-
-        Args:
-            url: Icecast stream URL.
-            bitrate: Bitrate in kbps.
-
-        Returns:
-            IcecastAudioSource instance.
-        """
-        logger.info(f"Creating Icecast audio source for URL: {url}")
-        return IcecastAudioSource(url=url, bitrate=bitrate)
-
-    @staticmethod
     def create_url_source(
         url: str,
         bitrate: int = 128,
@@ -115,11 +97,11 @@ class AudioSourceFactory:
     def create_from_config(
         source_type: str,
         config: dict,
-    ) -> Union[LocalAudioSource, IcecastAudioSource, URLAudioSource]:
+    ) -> Union[LocalAudioSource, URLAudioSource, WASAPILoopbackAudioSource]:
         """Create an audio source from configuration.
 
         Args:
-            source_type: Type of source ('local', 'icecast', 'url').
+            source_type: Type of source ('local', 'url').
             config: Configuration dictionary.
 
         Returns:
@@ -141,16 +123,6 @@ class AudioSourceFactory:
                 bitrate=config.get("bitrate", 128),
             )
 
-        elif source_type_lower == "icecast":
-            url = config.get("url")
-            if url is None:
-                raise ValueError("Icecast audio source requires 'url' in config")
-
-            return AudioSourceFactory.create_icecast_source(
-                url=url,
-                bitrate=config.get("bitrate", 128),
-            )
-
         elif source_type_lower == "url":
             url = config.get("url")
             if url is None:
@@ -164,5 +136,5 @@ class AudioSourceFactory:
         else:
             raise ValueError(
                 f"Unknown audio source type: {source_type}. "
-                f"Expected 'local', 'icecast', or 'url'"
+                f"Expected 'local' or 'url'"
             )

@@ -153,15 +153,17 @@ Understanding the codebase:
 
 ```
 src/
-├── config.py          # Environment variable management
-├── stream_reader.py   # Icecast stream connection
-├── audio_source.py    # Discord audio adapter
-└── bot.py            # Discord bot commands
+├── config.py                  # Environment variable management
+├── audio_device.py            # Audio device enumeration (WASAPI + DirectShow)
+├── audio_sources.py           # Audio source implementations (WASAPI, Local, URL)
+├── audio_source_factory.py    # Factory for creating audio sources
+└── bot.py                     # Discord bot commands
 
 tests/
 ├── test_config.py
-├── test_stream_reader.py
-├── test_audio_source.py
+├── test_audio_device.py
+├── test_audio_sources.py
+├── test_audio_source_factory.py
 └── test_bot.py
 ```
 

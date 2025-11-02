@@ -10,7 +10,7 @@ setup(
     version="1.0.0",
     author="Your Name",
     author_email="your.email@example.com",
-    description="A Discord bot for DJs to stream live audio via Icecast",
+    description="A Discord bot that streams system audio to Discord voice channels using WASAPI loopback",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/Amdusias-Discord-DJ-Bot",

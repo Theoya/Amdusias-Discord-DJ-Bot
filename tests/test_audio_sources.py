@@ -6,7 +6,6 @@ import discord
 from src.audio_sources import (
     AudioSourceType,
     LocalAudioSource,
-    IcecastAudioSource,
     URLAudioSource,
 )
 from src.audio_device import AudioDevice
@@ -150,44 +149,6 @@ class TestLocalAudioSource:
         )
 
         source = LocalAudioSource(device=device)
-        source.cleanup()  # Should not raise
-
-
-class TestIcecastAudioSource:
-    """Tests for IcecastAudioSource class."""
-
-    def test_initialization(self) -> None:
-        """Test IcecastAudioSource initialization."""
-        source = IcecastAudioSource(url="http://example.com:8000/stream", bitrate=128)
-
-        assert source.get_type() == AudioSourceType.ICECAST_STREAM
-        assert "http://example.com:8000/stream" in source.get_description()
-
-    @patch("discord.FFmpegPCMAudio")
-    def test_create_discord_source(self, mock_ffmpeg: Mock) -> None:
-        """Test creating Discord source from Icecast."""
-        source = IcecastAudioSource(url="http://example.com:8000/stream")
-        discord_source = source.create_discord_source()
-
-        mock_ffmpeg.assert_called_once()
-        call_args = mock_ffmpeg.call_args
-
-        assert "http://example.com:8000/stream" in str(call_args)
-        assert "reconnect" in str(call_args)
-
-    @patch("discord.FFmpegPCMAudio")
-    def test_create_discord_source_error(self, mock_ffmpeg: Mock) -> None:
-        """Test error when creating Discord source fails."""
-        mock_ffmpeg.side_effect = Exception("Connection error")
-
-        source = IcecastAudioSource(url="http://example.com:8000/stream")
-
-        with pytest.raises(RuntimeError, match="Failed to connect to Icecast stream"):
-            source.create_discord_source()
-
-    def test_cleanup(self) -> None:
-        """Test cleanup method."""
-        source = IcecastAudioSource(url="http://example.com:8000/stream")
         source.cleanup()  # Should not raise
 
 

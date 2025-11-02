@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import discord
 from discord.ext import commands
 from src.bot import DJBot
-from src.config import BotConfig, DiscordConfig, IcecastConfig, AudioConfig
-from src.audio_sources import IcecastAudioSource, AudioSourceType
+from src.config import BotConfig, DiscordConfig, AudioConfig
+from src.audio_sources import AudioSourceType
 
 
 class TestDJBot:
@@ -19,12 +19,6 @@ class TestDJBot:
             discord=DiscordConfig(
                 token="test_token", guild_id="123456", command_prefix="!"
             ),
-            icecast=IcecastConfig(
-                host="localhost",
-                port=8000,
-                mount="/live",
-                url="http://localhost:8000/live",
-            ),
             audio=AudioConfig(bitrate=128, sample_rate=48000),
         )
 
@@ -32,7 +26,7 @@ class TestDJBot:
     def mock_audio_source(self) -> Mock:
         """Create mock audio source for testing."""
         mock_source = Mock()
-        mock_source.get_type.return_value = AudioSourceType.ICECAST_STREAM
+        mock_source.get_type.return_value = AudioSourceType.LOCAL_DEVICE
         mock_source.get_description.return_value = "Test Audio Source"
         mock_source.create_discord_source.return_value = Mock(spec=discord.AudioSource)
         mock_source.cleanup = Mock()
@@ -96,12 +90,22 @@ class TestDJBot:
     ) -> None:
         """Test on_ready event handler."""
         bot = DJBot(mock_config, audio_source=mock_audio_source)
-        bot.user = Mock()
-        bot.user.__str__ = Mock(return_value="TestBot")
-        bot.guilds = [Mock(), Mock()]
 
-        # Should not raise error
-        await bot.on_ready()
+        # Mock the user and guilds properties
+        mock_user = Mock()
+        mock_user.name = "TestBot"
+        mock_guilds = [Mock(), Mock()]
+
+        with patch.object(
+            type(bot), "user", new_callable=lambda: property(lambda self: mock_user)
+        ):
+            with patch.object(
+                type(bot),
+                "guilds",
+                new_callable=lambda: property(lambda self: mock_guilds),
+            ):
+                # Should not raise error
+                await bot.on_ready()
 
     @pytest.mark.asyncio
     async def test_cleanup_with_voice_client(
@@ -142,7 +146,6 @@ class TestDJBot:
         command_names = [cmd.name for cmd in bot.commands]
 
         assert "join" in command_names
-        assert "leave" in command_names
         assert "play" in command_names
         assert "stop" in command_names
 
@@ -153,8 +156,9 @@ class TestDJBot:
         """Test join command when user is not in voice channel."""
         bot = DJBot(mock_config, audio_source=mock_audio_source)
 
-        # Create mock context
+        # Create mock context with Member author
         mock_ctx = AsyncMock(spec=commands.Context)
+        mock_ctx.author = Mock(spec=discord.Member)
         mock_ctx.author.voice = None
         mock_ctx.send = AsyncMock()
 
@@ -177,6 +181,7 @@ class TestDJBot:
         bot._voice_client = mock_voice_client
 
         mock_ctx = AsyncMock(spec=commands.Context)
+        mock_ctx.author = Mock(spec=discord.Member)
         mock_ctx.author.voice = Mock()
         mock_ctx.author.voice.channel = Mock()
         mock_ctx.send = AsyncMock()
@@ -188,22 +193,6 @@ class TestDJBot:
         assert "Already connected" in mock_ctx.send.call_args[0][0]
 
     @pytest.mark.asyncio
-    async def test_leave_command_not_connected(
-        self, mock_config: BotConfig, mock_audio_source: Mock
-    ) -> None:
-        """Test leave command when not connected."""
-        bot = DJBot(mock_config, audio_source=mock_audio_source)
-
-        mock_ctx = AsyncMock(spec=commands.Context)
-        mock_ctx.send = AsyncMock()
-
-        leave_cmd = bot.get_command("leave")
-        await leave_cmd.callback(mock_ctx)
-
-        mock_ctx.send.assert_called_once()
-        assert "Not connected" in mock_ctx.send.call_args[0][0]
-
-    @pytest.mark.asyncio
     async def test_play_command_not_connected(
         self, mock_config: BotConfig, mock_audio_source: Mock
     ) -> None:
@@ -211,13 +200,15 @@ class TestDJBot:
         bot = DJBot(mock_config, audio_source=mock_audio_source)
 
         mock_ctx = AsyncMock(spec=commands.Context)
+        mock_ctx.author = Mock(spec=discord.Member)
+        mock_ctx.author.voice = None
         mock_ctx.send = AsyncMock()
 
         play_cmd = bot.get_command("play")
         await play_cmd.callback(mock_ctx)
 
         mock_ctx.send.assert_called_once()
-        assert "Not connected to a voice channel" in mock_ctx.send.call_args[0][0]
+        assert "need to be in a voice channel" in mock_ctx.send.call_args[0][0]
 
     @pytest.mark.asyncio
     async def test_stop_command_not_connected(

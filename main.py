@@ -54,16 +54,6 @@ def select_audio_source(config: BotConfig) -> AudioSourceConfig:
             menu_options.append(("local", device))
             option_num += 1
 
-    # Add Icecast option if configured
-    if config.icecast:
-        if devices:
-            print("\nStreaming Sources:")
-        else:
-            print("\nAvailable Sources:")
-        print(f"  {option_num}. Icecast Stream ({config.icecast.url})")
-        menu_options.append(("icecast", config.icecast.url))
-        option_num += 1
-
     # Add custom URL option
     print(f"  {option_num}. Custom URL Stream")
     menu_options.append(("url", None))
@@ -90,14 +80,6 @@ def select_audio_source(config: BotConfig) -> AudioSourceConfig:
                         device_index=device.index,
                         bitrate=config.audio.bitrate,
                         sample_rate=config.audio.sample_rate,
-                    )
-
-                elif source_type == "icecast":
-                    url = source_data
-                    return AudioSourceConfig(
-                        source_type="icecast",
-                        url=url,
-                        bitrate=config.audio.bitrate,
                     )
 
                 elif source_type == "url":

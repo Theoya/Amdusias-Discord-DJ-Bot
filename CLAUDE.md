@@ -115,8 +115,9 @@ class TestConfigLoader:
 ### Separation of Concerns
 
 - **Configuration** (`src/config.py`): All environment variable loading and validation
-- **Streaming** (`src/stream_reader.py`): Icecast stream connection and reading
-- **Audio Processing** (`src/audio_source.py`): Audio source for Discord
+- **Audio Device Enumeration** (`src/audio_device.py`): Device detection and WASAPI loopback
+- **Audio Sources** (`src/audio_sources.py`): Audio source implementations (WASAPI, Local, URL)
+- **Audio Source Factory** (`src/audio_source_factory.py`): Factory for creating audio sources
 - **Bot Logic** (`src/bot.py`): Discord bot commands and event handling
 - **Entry Point** (`main.py`): Application startup and error handling
 

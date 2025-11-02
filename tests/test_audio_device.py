@@ -38,14 +38,14 @@ class TestAudioDeviceEnumerator:
         mock_system.return_value = "Windows"
 
         # Mock FFmpeg output
-        mock_output = '''
+        mock_output = """
 [dshow @ 000001] DirectShow video devices
 [dshow @ 000001] DirectShow audio devices
 [dshow @ 000001]  "Microphone (Realtek Audio)"
 [dshow @ 000001]     Alternative name "@device_cm_{GUID}\\wave_{GUID}"
 [dshow @ 000001]  "Stereo Mix (Realtek Audio)"
 [dshow @ 000001]     Alternative name "@device_cm_{GUID}\\wave_{GUID}"
-        '''
+        """
 
         with patch("subprocess.run") as mock_run:
             mock_result = Mock()
@@ -81,9 +81,7 @@ class TestAudioDeviceEnumerator:
 
     @patch("subprocess.run")
     @patch("platform.system")
-    def test_enumerate_devices_timeout(
-        self, mock_system: Mock, mock_run: Mock
-    ) -> None:
+    def test_enumerate_devices_timeout(self, mock_system: Mock, mock_run: Mock) -> None:
         """Test error when FFmpeg times out."""
         mock_system.return_value = "Windows"
         mock_run.side_effect = subprocess.TimeoutExpired(cmd="ffmpeg", timeout=10)
@@ -96,11 +94,11 @@ class TestAudioDeviceEnumerator:
         """Test getting device by index."""
         mock_system.return_value = "Windows"
 
-        mock_output = '''
+        mock_output = """
 [dshow @ 000001] DirectShow audio devices
 [dshow @ 000001]  "Test Device 1"
 [dshow @ 000001]  "Test Device 2"
-        '''
+        """
 
         with patch("subprocess.run") as mock_run:
             mock_result = Mock()
@@ -118,10 +116,10 @@ class TestAudioDeviceEnumerator:
         """Test getting device by invalid index."""
         mock_system.return_value = "Windows"
 
-        mock_output = '''
+        mock_output = """
 [dshow @ 000001] DirectShow audio devices
 [dshow @ 000001]  "Test Device 1"
-        '''
+        """
 
         with patch("subprocess.run") as mock_run:
             mock_result = Mock()

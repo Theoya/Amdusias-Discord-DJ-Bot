@@ -17,9 +17,7 @@ class AudioSourceType(Enum):
     """Types of audio sources supported by the bot."""
 
     LOCAL_DEVICE = "local_device"
-    ICECAST_STREAM = "icecast_stream"
     URL_STREAM = "url_stream"
-    FILE = "file"
     WASAPI_LOOPBACK = "wasapi_loopback"
 
 
@@ -65,7 +63,9 @@ class AudioSourceProtocol(Protocol):
 class LocalAudioSource:
     """Audio source that captures from a local audio device."""
 
-    def __init__(self, device: AudioDevice, sample_rate: int = 48000, bitrate: int = 128) -> None:
+    def __init__(
+        self, device: AudioDevice, sample_rate: int = 48000, bitrate: int = 128
+    ) -> None:
         """Initialize local audio source.
 
         Args:
@@ -127,7 +127,9 @@ class LocalAudioSource:
 
         except Exception as e:
             logger.error(f"Failed to create local audio source: {e}")
-            raise RuntimeError(f"Failed to connect to audio device '{self._device.name}': {e}")
+            raise RuntimeError(
+                f"Failed to connect to audio device '{self._device.name}': {e}"
+            )
 
     def _get_input_format(self) -> str:
         """Get the FFmpeg input format for the current platform.
@@ -158,6 +160,7 @@ class LocalAudioSource:
         if self._device.device_id == "desktop-audio":
             # Use audio loopback - captures default playback device
             import platform
+
             if platform.system().lower() == "windows":
                 # For Windows, we'll use dshow with a loopback device or
                 # try to use the default audio renderer
@@ -168,70 +171,6 @@ class LocalAudioSource:
     def cleanup(self) -> None:
         """Clean up any resources used by this audio source."""
         logger.debug(f"Cleaning up local audio source: {self._device.name}")
-        # No specific cleanup needed for FFmpeg-based sources
-        pass
-
-
-class IcecastAudioSource:
-    """Audio source that streams from an Icecast server."""
-
-    def __init__(self, url: str, bitrate: int = 128) -> None:
-        """Initialize Icecast audio source.
-
-        Args:
-            url: Icecast stream URL.
-            bitrate: Audio bitrate in kbps (default 128).
-        """
-        self._url = url
-        self._bitrate = bitrate
-
-    def get_type(self) -> AudioSourceType:
-        """Get the type of this audio source.
-
-        Returns:
-            AudioSourceType.ICECAST_STREAM
-        """
-        return AudioSourceType.ICECAST_STREAM
-
-    def get_description(self) -> str:
-        """Get a human-readable description of this audio source.
-
-        Returns:
-            Description string.
-        """
-        return f"Icecast Stream: {self._url}"
-
-    def create_discord_source(self) -> discord.AudioSource:
-        """Create a Discord audio source for playback.
-
-        Returns:
-            Discord FFmpegPCMAudio source configured for Icecast streaming.
-
-        Raises:
-            RuntimeError: If FFmpeg fails to connect to the stream.
-        """
-        try:
-            # FFmpeg options for better streaming stability
-            before_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
-
-            # Output options for Discord
-            options = f"-vn -b:a {self._bitrate}k"
-
-            logger.info(f"Creating audio source from Icecast: {self._url}")
-
-            return discord.FFmpegPCMAudio(
-                self._url,
-                before_options=before_options,
-                options=options,
-            )
-
-        except Exception as e:
-            logger.error(f"Failed to create Icecast audio source: {e}")
-            raise RuntimeError(f"Failed to connect to Icecast stream '{self._url}': {e}")
-
-    def cleanup(self) -> None:
-        """Clean up any resources used by this audio source."""
-        logger.debug(f"Cleaning up Icecast audio source: {self._url}")
         # No specific cleanup needed for FFmpeg-based sources
         pass
 
@@ -300,7 +239,9 @@ class URLAudioSource:
 class WASAPILoopbackPCMAudio(discord.AudioSource):
     """Custom Discord AudioSource that reads from WASAPI loopback."""
 
-    def __init__(self, device_index: int, device_name: str, sample_rate: int, channels: int):
+    def __init__(
+        self, device_index: int, device_name: str, sample_rate: int, channels: int
+    ):
         """Initialize WASAPI PCM audio source.
 
         Args:
@@ -318,7 +259,7 @@ class WASAPILoopbackPCMAudio(discord.AudioSource):
         self._channels = channels
         self._pyaudio = pyaudio.PyAudio()
         self._stream = None
-        self._buffer = b''
+        self._buffer = b""
 
         # Open audio stream
         self._stream = self._pyaudio.open(
@@ -342,7 +283,7 @@ class WASAPILoopbackPCMAudio(discord.AudioSource):
         """
         try:
             if not self._stream or not self._stream.is_active():
-                return b''
+                return b""
 
             # Read from PyAudio stream
             # Need to read enough for 20ms at the device's sample rate
@@ -352,25 +293,27 @@ class WASAPILoopbackPCMAudio(discord.AudioSource):
             # Resample if needed
             if self._sample_rate != 48000:
                 import audioop
+
                 data, _ = audioop.ratecv(
                     data,
                     2,  # 16-bit = 2 bytes
                     self._channels,
                     self._sample_rate,
                     48000,
-                    None
+                    None,
                 )
 
             # Convert to stereo if mono
             if self._channels == 1:
                 import audioop
+
                 data = audioop.tostereo(data, 2, 1, 1)
 
             return data
 
         except Exception as e:
             logger.error(f"Error reading from WASAPI loopback: {e}")
-            return b''
+            return b""
 
     def cleanup(self):
         """Clean up audio stream resources."""
@@ -386,7 +329,9 @@ class WASAPILoopbackPCMAudio(discord.AudioSource):
 class WASAPILoopbackAudioSource:
     """Audio source that captures system audio using WASAPI loopback."""
 
-    def __init__(self, device_index: int, sample_rate: int = 48000, bitrate: int = 128) -> None:
+    def __init__(
+        self, device_index: int, sample_rate: int = 48000, bitrate: int = 128
+    ) -> None:
         """Initialize WASAPI loopback audio source.
 
         Args:
@@ -402,11 +347,12 @@ class WASAPILoopbackAudioSource:
         # Get device info
         try:
             import pyaudiowpatch as pyaudio
+
             p = pyaudio.PyAudio()
             info = p.get_device_info_by_index(device_index)
-            self._device_name = info['name'].replace(' [Loopback]', '')
-            self._device_sample_rate = int(info['defaultSampleRate'])
-            self._device_channels = info['maxInputChannels']
+            self._device_name = info["name"].replace(" [Loopback]", "")
+            self._device_sample_rate = int(info["defaultSampleRate"])
+            self._device_channels = info["maxInputChannels"]
             p.terminate()
         except Exception as e:
             logger.warning(f"Could not get device info: {e}")
@@ -440,7 +386,9 @@ class WASAPILoopbackAudioSource:
         """
         try:
             logger.info(f"Creating WASAPI loopback source: {self._device_name}")
-            logger.debug(f"Device index: {self._device_index}, Sample rate: {self._device_sample_rate}, Channels: {self._device_channels}")
+            logger.debug(
+                f"Device index: {self._device_index}, Sample rate: {self._device_sample_rate}, Channels: {self._device_channels}"
+            )
 
             # Create custom PCM audio source
             return WASAPILoopbackPCMAudio(
@@ -451,7 +399,9 @@ class WASAPILoopbackAudioSource:
             )
 
         except ImportError:
-            raise RuntimeError("pyaudiowpatch not installed - cannot use WASAPI loopback")
+            raise RuntimeError(
+                "pyaudiowpatch not installed - cannot use WASAPI loopback"
+            )
         except Exception as e:
             logger.error(f"Failed to create WASAPI loopback source: {e}")
             raise RuntimeError(f"Failed to capture system audio: {e}")
