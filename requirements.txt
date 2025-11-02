@@ -7,7 +7,7 @@ python-dotenv==1.0.0
 
 # Audio processing
 ffmpeg-python==0.2.0
-pyaudiowpatch>=0.2.12.7  # WASAPI loopback for system audio capture (Windows)
+pyaudiowpatch>=0.2.12.7; sys_platform == 'win32'  # WASAPI loopback for system audio capture (Windows only)
 
 # HTTP requests
 requests==2.31.0

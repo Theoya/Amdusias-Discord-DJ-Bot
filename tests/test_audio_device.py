@@ -33,7 +33,7 @@ class TestAudioDeviceEnumerator:
         assert system_type in ["windows", "linux", "darwin"]
 
     @patch("platform.system")
-    @patch("pyaudiowpatch.PyAudio")
+    @patch("pyaudiowpatch.PyAudio", create=True)
     def test_enumerate_devices_windows(
         self, mock_pyaudio_class: Mock, mock_system: Mock
     ) -> None:
@@ -88,7 +88,7 @@ class TestAudioDeviceEnumerator:
         with pytest.raises(RuntimeError, match="FFmpeg not found"):
             AudioDeviceEnumerator.enumerate_devices()
 
-    @patch("pyaudiowpatch.PyAudio")
+    @patch("pyaudiowpatch.PyAudio", create=True)
     @patch("subprocess.run")
     @patch("platform.system")
     def test_enumerate_devices_timeout(
@@ -109,7 +109,7 @@ class TestAudioDeviceEnumerator:
         assert devices == []
 
     @patch("platform.system")
-    @patch("pyaudiowpatch.PyAudio")
+    @patch("pyaudiowpatch.PyAudio", create=True)
     def test_get_device_by_index(
         self, mock_pyaudio_class: Mock, mock_system: Mock
     ) -> None:
@@ -140,7 +140,7 @@ class TestAudioDeviceEnumerator:
             assert device.name == "Test Device 2 [Microphone]"
 
     @patch("platform.system")
-    @patch("pyaudiowpatch.PyAudio")
+    @patch("pyaudiowpatch.PyAudio", create=True)
     def test_get_device_by_index_invalid(
         self, mock_pyaudio_class: Mock, mock_system: Mock
     ) -> None:
