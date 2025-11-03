@@ -95,7 +95,7 @@ class DJBot(commands.Bot):
 
             try:
                 # channel is VoiceChannel or StageChannel, both have connect()
-                self._voice_client = await channel.connect()  # type: ignore[union-attr]
+                self._voice_client = await channel.connect()
                 await ctx.send(f"Joined {channel.name}")
                 logger.info(f"Joined voice channel: {channel.name}")
             except Exception as e:
@@ -134,7 +134,7 @@ class DJBot(commands.Bot):
 
                 try:
                     # Join the user's voice channel
-                    self._voice_client = await channel.connect()  # type: ignore[union-attr]
+                    self._voice_client = await channel.connect()
                     await ctx.send(f"Joined {channel.name}")
                     logger.info(f"Auto-joined voice channel: {channel.name}")
                 except Exception as e:

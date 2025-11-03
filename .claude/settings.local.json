@@ -12,7 +12,9 @@
       "Bash(ffmpeg:*)",
       "Bash(./venv/Scripts/python.exe -m pip:*)",
       "Bash(./venv/Scripts/python.exe:*)",
-      "Bash(del \"T:\\Amdusias-Discord-DJ-Bot\\src\\stream_reader.py\")"
+      "Bash(del \"T:\\Amdusias-Discord-DJ-Bot\\src\\stream_reader.py\")",
+      "Bash(timeout 15 ./venv/Scripts/python.exe -m mypy:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

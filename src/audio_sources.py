@@ -315,7 +315,7 @@ class WASAPILoopbackPCMAudio(discord.AudioSource):
             logger.error(f"Error reading from WASAPI loopback: {e}")
             return b""
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up audio stream resources."""
         if self._stream:
             self._stream.stop_stream()
